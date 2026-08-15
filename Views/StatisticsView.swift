@@ -1,6 +1,19 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Dawnly Theme
+
+private extension Color {
+
+    static let dawnlyOrange = Color(
+        red: 1.0,
+        green: 0.55,
+        blue: 0.15
+    )
+}
+
+// MARK: - Statistics View
+
 struct StatisticsView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -11,11 +24,17 @@ struct StatisticsView: View {
 
         ScrollView {
 
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(
+                alignment: .leading,
+                spacing: 24
+            ) {
 
                 // MARK: - Header
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(
+                    alignment: .leading,
+                    spacing: 6
+                ) {
 
                     Text("Statistics")
                         .font(
@@ -31,7 +50,7 @@ struct StatisticsView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // MARK: - Period Picker
+                // MARK: - Period Selector
 
                 Picker(
                     "Period",
@@ -49,13 +68,13 @@ struct StatisticsView: View {
                 }
                 .pickerStyle(.segmented)
 
-                // MARK: - Main Statistics
+                // MARK: - Focus Summary
 
                 StatisticsSummaryCard(
                     period: selectedPeriod
                 )
 
-                // MARK: - Daily Breakdown
+                // MARK: - Daily Focus
 
                 DailyFocusCard(
                     period: selectedPeriod
@@ -71,8 +90,11 @@ struct StatisticsView: View {
 
                 StreakCard()
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 32)
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("Statistics")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -102,7 +124,7 @@ enum StatisticsPeriod: CaseIterable {
     }
 }
 
-// MARK: - Statistics Summary
+// MARK: - Statistics Summary Card
 
 struct StatisticsSummaryCard: View {
 
@@ -111,6 +133,7 @@ struct StatisticsSummaryCard: View {
     let period: StatisticsPeriod
 
     private var manager: StatisticsManager {
+
         StatisticsManager(
             context: modelContext
         )
@@ -152,8 +175,7 @@ struct StatisticsSummaryCard: View {
             spacing: 20
         ) {
 
-            Text("Focus time")
-                .font(.headline)
+            // Header
 
             HStack {
 
@@ -162,52 +184,89 @@ struct StatisticsSummaryCard: View {
                     spacing: 4
                 ) {
 
-                    Text(
-                        manager.formattedDuration(
-                            totalFocus
-                        )
-                    )
-                    .font(
-                        .system(
-                            size: 36,
-                            weight: .bold,
-                            design: .rounded
-                        )
-                    )
-                    .monospacedDigit()
+                    Text("Focus time")
+                        .font(.headline)
 
-                    Text(
-                        "\(sessionCount) completed " +
-                        (sessionCount == 1
-                         ? "session"
-                         : "sessions")
-                    )
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    Text(period.title)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                Image(
-                    systemName: "timer"
-                )
-                .font(
-                    .system(
-                        size: 28,
-                        weight: .semibold
+                Image(systemName: "timer")
+                    .font(
+                        .system(
+                            size: 22,
+                            weight: .semibold
+                        )
                     )
+                    .foregroundStyle(
+                        Color.dawnlyOrange
+                    )
+                    .frame(
+                        width: 46,
+                        height: 46
+                    )
+                    .background(
+                        Color.dawnlyOrange.opacity(0.12),
+                        in: Circle()
+                    )
+            }
+
+            // Main value
+
+            Text(
+                manager.formattedDuration(
+                    totalFocus
+                )
+            )
+            .font(
+                .system(
+                    size: 42,
+                    weight: .bold,
+                    design: .rounded
+                )
+            )
+            .monospacedDigit()
+
+            // Session information
+
+            HStack(spacing: 8) {
+
+                Image(
+                    systemName: "checkmark.circle.fill"
                 )
                 .foregroundStyle(
-                    Color.accentColor
+                    Color.dawnlyOrange
                 )
+
+                Text(
+                    "\(sessionCount) completed " +
+                    (
+                        sessionCount == 1
+                        ? "session"
+                        : "sessions"
+                    )
+                )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             }
         }
-        .padding(20)
+        .padding(22)
         .frame(maxWidth: .infinity)
         .background(
-            Color.accentColor.opacity(0.08),
+            LinearGradient(
+                colors: [
+                    Color.dawnlyOrange.opacity(0.16),
+                    Color.dawnlyOrange.opacity(0.06)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
             in: RoundedRectangle(
-                cornerRadius: 20
+                cornerRadius: 24,
+                style: .continuous
             )
         )
     }
@@ -222,6 +281,7 @@ struct DailyFocusCard: View {
     let period: StatisticsPeriod
 
     private var manager: StatisticsManager {
+
         StatisticsManager(
             context: modelContext
         )
@@ -242,7 +302,8 @@ struct DailyFocusCard: View {
         }
     }
 
-    private var dailyData: [(date: Date, duration: TimeInterval)] {
+    private var dailyData:
+        [(date: Date, duration: TimeInterval)] {
 
         manager.dailyFocusTime(
             sessions: sessions
@@ -258,6 +319,13 @@ struct DailyFocusCard: View {
         }
     }
 
+    private var maximumDuration: TimeInterval {
+
+        dailyData
+            .map(\.duration)
+            .max() ?? 1
+    }
+
     var body: some View {
 
         VStack(
@@ -265,58 +333,72 @@ struct DailyFocusCard: View {
             spacing: 18
         ) {
 
-            Text("Daily focus")
-                .font(.headline)
+            // Header
+
+            HStack {
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 4
+                ) {
+
+                    Text("Daily focus")
+                        .font(.headline)
+
+                    Text(
+                        period == .today
+                        ? "Your focus today"
+                        : "Focus by day"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(
+                    systemName: "chart.bar.fill"
+                )
+                .foregroundStyle(
+                    Color.dawnlyOrange
+                )
+            }
 
             if dailyData.isEmpty {
 
-                VStack(spacing: 10) {
-
-                    Image(
-                        systemName: "chart.bar.xaxis"
-                    )
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-
-                    Text("No focus sessions yet.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(
-                    maxWidth: .infinity,
-                    minHeight: 120
+                EmptyStatisticsView(
+                    icon: "chart.bar.xaxis",
+                    title: "No focus yet",
+                    message: "Complete a focus session to see your daily progress."
                 )
 
             } else {
 
-                ForEach(
-                    dailyData,
-                    id: \.date
-                ) { item in
+                VStack(spacing: 16) {
 
-                    DailyFocusRow(
-                        date: item.date,
-                        duration: item.duration,
-                        maximum: maximumDuration
-                    )
+                    ForEach(
+                        dailyData,
+                        id: \.date
+                    ) { item in
+
+                        DailyFocusRow(
+                            date: item.date,
+                            duration: item.duration,
+                            maximum: maximumDuration
+                        )
+                    }
                 }
             }
         }
-        .padding(20)
+        .padding(22)
         .frame(maxWidth: .infinity)
         .background(
-            Color.secondary.opacity(0.06),
+            Color(.secondarySystemGroupedBackground),
             in: RoundedRectangle(
-                cornerRadius: 20
+                cornerRadius: 24,
+                style: .continuous
             )
         )
-    }
-
-    private var maximumDuration: TimeInterval {
-
-        dailyData
-            .map(\.duration)
-            .max() ?? 1
     }
 }
 
@@ -334,14 +416,17 @@ struct DailyFocusRow: View {
             return 0
         }
 
-        return duration / maximum
+        return min(
+            max(duration / maximum, 0),
+            1
+        )
     }
 
     var body: some View {
 
         VStack(
             alignment: .leading,
-            spacing: 7
+            spacing: 8
         ) {
 
             HStack {
@@ -353,20 +438,24 @@ struct DailyFocusRow: View {
                             .day()
                     )
                 )
-                .font(.subheadline)
+                .font(
+                    .system(
+                        size: 13,
+                        weight: .medium
+                    )
+                )
 
                 Spacer()
 
-                Text(
-                    formattedDuration
-                )
-                .font(
-                    .system(
-                        size: 12,
-                        weight: .semibold
+                Text(formattedDuration)
+                    .font(
+                        .system(
+                            size: 13,
+                            weight: .semibold
+                        )
                     )
-                )
-                .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
             }
 
             GeometryReader { geometry in
@@ -379,7 +468,7 @@ struct DailyFocusRow: View {
 
                         Capsule()
                             .fill(
-                                Color.accentColor
+                                Color.dawnlyOrange
                             )
                             .frame(
                                 width:
@@ -388,7 +477,7 @@ struct DailyFocusRow: View {
                             )
                     }
             }
-            .frame(height: 6)
+            .frame(height: 7)
         }
     }
 
@@ -420,6 +509,7 @@ struct SessionInsightsCard: View {
     let period: StatisticsPeriod
 
     private var manager: StatisticsManager {
+
         StatisticsManager(
             context: modelContext
         )
@@ -447,8 +537,30 @@ struct SessionInsightsCard: View {
             spacing: 18
         ) {
 
-            Text("Session insights")
-                .font(.headline)
+            HStack {
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 4
+                ) {
+
+                    Text("Session insights")
+                        .font(.headline)
+
+                    Text("Understand your focus habits.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(
+                    systemName: "sparkles"
+                )
+                .foregroundStyle(
+                    Color.dawnlyOrange
+                )
+            }
 
             HStack(spacing: 12) {
 
@@ -459,7 +571,7 @@ struct SessionInsightsCard: View {
                             sessions: sessions
                         )
                     ),
-                    icon: "chart.bar"
+                    icon: "chart.bar.fill"
                 )
 
                 InsightItem(
@@ -469,16 +581,17 @@ struct SessionInsightsCard: View {
                             sessions: sessions
                         )
                     ),
-                    icon: "flame"
+                    icon: "flame.fill"
                 )
             }
         }
-        .padding(20)
+        .padding(22)
         .frame(maxWidth: .infinity)
         .background(
-            Color.secondary.opacity(0.06),
+            Color(.secondarySystemGroupedBackground),
             in: RoundedRectangle(
-                cornerRadius: 20
+                cornerRadius: 24,
+                style: .continuous
             )
         )
     }
@@ -496,15 +609,27 @@ struct InsightItem: View {
 
         VStack(
             alignment: .leading,
-            spacing: 10
+            spacing: 12
         ) {
 
-            Image(
-                systemName: icon
-            )
-            .foregroundStyle(
-                Color.accentColor
-            )
+            Image(systemName: icon)
+                .font(
+                    .system(
+                        size: 16,
+                        weight: .semibold
+                    )
+                )
+                .foregroundStyle(
+                    Color.dawnlyOrange
+                )
+                .frame(
+                    width: 34,
+                    height: 34
+                )
+                .background(
+                    Color.dawnlyOrange.opacity(0.12),
+                    in: Circle()
+                )
 
             Text(title)
                 .font(.caption)
@@ -513,7 +638,7 @@ struct InsightItem: View {
             Text(value)
                 .font(
                     .system(
-                        size: 20,
+                        size: 22,
                         weight: .bold,
                         design: .rounded
                     )
@@ -528,7 +653,8 @@ struct InsightItem: View {
         .background(
             Color.secondary.opacity(0.06),
             in: RoundedRectangle(
-                cornerRadius: 14
+                cornerRadius: 18,
+                style: .continuous
             )
         )
     }
@@ -562,7 +688,15 @@ struct StreakCard: View {
                 )
             )
             .foregroundStyle(
-                Color.accentColor
+                Color.dawnlyOrange
+            )
+            .frame(
+                width: 52,
+                height: 52
+            )
+            .background(
+                Color.dawnlyOrange.opacity(0.12),
+                in: Circle()
             )
 
             VStack(
@@ -573,35 +707,123 @@ struct StreakCard: View {
                 Text("Current streak")
                     .font(.headline)
 
-                Text(
-                    streak == 1
-                    ? "1 day"
-                    : "\(streak) days"
-                )
-                .font(
-                    .system(
-                        size: 24,
-                        weight: .bold,
-                        design: .rounded
+                if streak == 0 {
+
+                    Text("Start your streak today")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                } else {
+
+                    Text(
+                        streak == 1
+                        ? "1 day"
+                        : "\(streak) days"
                     )
-                )
+                    .font(
+                        .system(
+                            size: 25,
+                            weight: .bold,
+                            design: .rounded
+                        )
+                    )
+                    .monospacedDigit()
+                }
             }
 
             Spacer()
+
+            if streak > 0 {
+
+                VStack(
+                    alignment: .trailing,
+                    spacing: 3
+                ) {
+
+                    Text("KEEP GOING")
+                        .font(
+                            .system(
+                                size: 9,
+                                weight: .bold
+                            )
+                        )
+                        .tracking(0.8)
+                        .foregroundStyle(
+                            Color.dawnlyOrange
+                        )
+
+                    Image(
+                        systemName: "arrow.up.right"
+                    )
+                    .font(
+                        .system(
+                            size: 12,
+                            weight: .semibold
+                        )
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                }
+            }
         }
-        .padding(20)
+        .padding(22)
         .frame(maxWidth: .infinity)
         .background(
-            Color.accentColor.opacity(0.08),
+            LinearGradient(
+                colors: [
+                    Color.dawnlyOrange.opacity(0.14),
+                    Color.dawnlyOrange.opacity(0.05)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
             in: RoundedRectangle(
-                cornerRadius: 20
+                cornerRadius: 24,
+                style: .continuous
             )
         )
     }
 }
 
+// MARK: - Empty Statistics View
+
+private struct EmptyStatisticsView: View {
+
+    let icon: String
+    let title: String
+    let message: String
+
+    var body: some View {
+
+        VStack(spacing: 10) {
+
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(.secondary)
+
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 260)
+        }
+        .frame(
+            maxWidth: .infinity,
+            minHeight: 110
+        )
+    }
+}
+
+// MARK: - Preview
+
 #Preview {
+
     NavigationStack {
+
         StatisticsView()
     }
 }
