@@ -16,6 +16,13 @@ struct ContentView: View {
                 .tabItem {
                     Label("History", systemImage: "clock.arrow.circlepath")
                 }
+            StatisticsView()
+                .tabItem {
+                    Label(
+                        "Statistics",
+                        systemImage: "chart.bar.fill"
+                    )
+                }
         }
     }
 }

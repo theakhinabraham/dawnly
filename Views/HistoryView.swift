@@ -2,6 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
+    
+    @Environment(\.modelContext) private var modelContext
 
     @Query(
         filter: #Predicate<FocusSession> { session in
@@ -11,6 +13,16 @@ struct HistoryView: View {
         order: .reverse
     )
     private var sessions: [FocusSession]
+    
+    private func deleteSession(_ session: FocusSession) {
+        modelContext.delete(session)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to delete session: \(error)")
+        }
+    }   
 
     var body: some View {
 
@@ -77,6 +89,13 @@ struct HistoryView: View {
                                         SessionRow(
                                             session: session
                                         )
+                                        .swipeActions(edge: .trailing) {
+                                            Button(role: .destructive) {
+                                                deleteSession(session)
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -242,6 +261,8 @@ private struct SessionRow: View {
 
         return "\(minutes) minutes"
     }
+    
+    
 }
 
 #Preview {

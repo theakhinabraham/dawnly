@@ -2,8 +2,12 @@ import Foundation
 
 enum DawnlySharedState {
 
+    // MARK: - App Group
+
     private static let suiteName =
         "group.com.akhin.dawnly"
+
+    // MARK: - Keys
 
     private static let startDateKey =
         "runningSessionStartDate"
@@ -11,12 +15,43 @@ enum DawnlySharedState {
     private static let endDateKey =
         "runningSessionEndDate"
 
-    private static var defaults:
-        UserDefaults {
+    // MARK: - UserDefaults
 
-        UserDefaults(
+    private static var defaults: UserDefaults {
+
+        guard let defaults = UserDefaults(
             suiteName: suiteName
-        )!
+        ) else {
+
+            fatalError(
+                "Could not access Dawnly App Group: \(suiteName)"
+            )
+        }
+
+        return defaults
+    }
+
+    // MARK: - Running Session
+
+    struct RunningSession {
+
+        let startDate: Date
+        let endDate: Date
+
+        var duration: TimeInterval {
+            endDate.timeIntervalSince(startDate)
+        }
+
+        var timeRemaining: TimeInterval {
+            max(
+                0,
+                endDate.timeIntervalSinceNow
+            )
+        }
+
+        var isRunning: Bool {
+            endDate > Date()
+        }
     }
 
     // MARK: - Save
@@ -35,40 +70,49 @@ enum DawnlySharedState {
             endDate,
             forKey: endDateKey
         )
+
+        defaults.synchronize()
     }
 
     // MARK: - Read
 
     static func runningSession()
-        -> (startDate: Date, endDate: Date)? {
+        -> RunningSession? {
 
         guard
-            let startDate =
-                defaults.object(
-                    forKey: startDateKey
-                ) as? Date,
+            let startDate = defaults.object(
+                forKey: startDateKey
+            ) as? Date,
 
-            let endDate =
-                defaults.object(
-                    forKey: endDateKey
-                ) as? Date
+            let endDate = defaults.object(
+                forKey: endDateKey
+            ) as? Date
         else {
+
             return nil
         }
 
-        // Automatically treat an expired session
-        // as no longer running.
-        if endDate <= Date() {
+        // If the timer has expired,
+        // remove the stale shared state.
+
+        guard endDate > Date() else {
 
             clearRunningSession()
 
             return nil
         }
 
-        return (
+        return RunningSession(
             startDate: startDate,
             endDate: endDate
         )
+    }
+
+    // MARK: - Is Running
+
+    static var isRunning: Bool {
+
+        runningSession() != nil
     }
 
     // MARK: - Clear
@@ -82,5 +126,7 @@ enum DawnlySharedState {
         defaults.removeObject(
             forKey: endDateKey
         )
+
+        defaults.synchronize()
     }
 }

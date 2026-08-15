@@ -63,7 +63,7 @@
 			);
 			target = 41D77C2D3030283F00FD7519 /* DawnlyWidgetExtension */;
 		};
-		41D77C4D30302DD000FD7519 /* Exceptions for "Models" folder in "DawnlyWidgetExtension" target */ = {
+		41F5EF123030ACEA00CC14F6 /* Exceptions for "Models" folder in "DawnlyWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				FocusSession.swift,
@@ -84,7 +84,7 @@
 		419E7FA43024917200D7ACD5 /* Models */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				41D77C4D30302DD000FD7519 /* Exceptions for "Models" folder in "DawnlyWidgetExtension" target */,
+				41F5EF123030ACEA00CC14F6 /* Exceptions for "Models" folder in "DawnlyWidgetExtension" target */,
 			);
 			path = Models;
 			sourceTree = "<group>";

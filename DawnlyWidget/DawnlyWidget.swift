@@ -3,6 +3,16 @@ import WidgetKit
 import SwiftUI
 import SwiftData
 
+// MARK: - Dawnly Theme
+
+private extension Color {
+    static let dawnlyOrange = Color(
+        red: 1.0,
+        green: 0.55,
+        blue: 0.15
+    )
+}
+
 // MARK: - Timeline Entry
 
 struct DawnlyWidgetEntry: TimelineEntry {
@@ -62,9 +72,7 @@ struct DawnlyWidgetProvider: TimelineProvider {
 
     func getTimeline(
         in context: Context,
-        completion: @escaping (
-            Timeline<DawnlyWidgetEntry>
-        ) -> Void
+        completion: @escaping (Timeline<DawnlyWidgetEntry>) -> Void
     ) {
 
         let now = Date()
@@ -92,12 +100,7 @@ struct DawnlyWidgetProvider: TimelineProvider {
             sessionEndDate: runningSession?.endDate
         )
 
-        // If a session is running, ask WidgetKit
-        // to refresh shortly after it finishes.
-        //
-        // The actual countdown itself is rendered
-        // by Text(timerInterval:countingDown:).
-
+        // Refresh when the active session finishes.
         let nextRefresh: Date
 
         if let endDate = runningSession?.endDate,
@@ -189,7 +192,7 @@ struct DawnlyWidgetEntryView: View {
 
             // MARK: Header
 
-            HStack(spacing: 6) {
+            HStack {
 
                 Image(
                     systemName:
@@ -199,21 +202,13 @@ struct DawnlyWidgetEntryView: View {
                 )
                 .font(
                     .system(
-                        size: 12,
+                        size: 14,
                         weight: .semibold
                     )
                 )
                 .foregroundStyle(
-                    Color.accentColor
+                    Color.dawnlyOrange
                 )
-
-                Text("Dawnly")
-                    .font(
-                        .system(
-                            size: 13,
-                            weight: .semibold
-                        )
-                    )
 
                 Spacer()
 
@@ -221,7 +216,7 @@ struct DawnlyWidgetEntryView: View {
 
                     Circle()
                         .fill(
-                            Color.accentColor
+                            Color.dawnlyOrange
                         )
                         .frame(
                             width: 6,
@@ -257,9 +252,7 @@ struct DawnlyWidgetEntryView: View {
 
                     Text(
                         timerInterval:
-                            startDate
-                            ...
-                            endDate,
+                            startDate...endDate,
                         countsDown: true
                     )
                     .font(
@@ -270,6 +263,9 @@ struct DawnlyWidgetEntryView: View {
                         )
                     )
                     .monospacedDigit()
+                    .foregroundStyle(
+                        Color.dawnlyOrange
+                    )
                 }
 
             } else {
@@ -302,6 +298,9 @@ struct DawnlyWidgetEntryView: View {
                         )
                     )
                     .monospacedDigit()
+                    .foregroundStyle(
+                        Color.dawnlyOrange
+                    )
                 }
             }
 
@@ -351,7 +350,7 @@ struct DawnlyWidgetEntryView: View {
             for: .widget
         ) {
 
-            Color.accentColor
+            Color.dawnlyOrange
                 .opacity(0.06)
         }
     }
@@ -416,6 +415,8 @@ struct DawnlyWidget: Widget {
 
 // MARK: - Live Activity
 
+// MARK: - Live Activity
+
 struct DawnlyLiveActivity: Widget {
 
     var body: some WidgetConfiguration {
@@ -431,13 +432,14 @@ struct DawnlyLiveActivity: Widget {
                 spacing: 0
             ) {
 
+                // MARK: Header
+
                 HStack {
 
                     HStack(spacing: 8) {
 
                         Image(
-                            systemName:
-                                "sun.max.fill"
+                            systemName: "sun.max.fill"
                         )
                         .font(
                             .system(
@@ -446,7 +448,7 @@ struct DawnlyLiveActivity: Widget {
                             )
                         )
                         .foregroundStyle(
-                            Color.accentColor
+                            Color.dawnlyOrange
                         )
 
                         Text("Dawnly")
@@ -469,11 +471,13 @@ struct DawnlyLiveActivity: Widget {
                         )
                         .tracking(1.2)
                         .foregroundStyle(
-                            .secondary
+                            Color.dawnlyOrange
                         )
                 }
 
                 Spacer(minLength: 16)
+
+                // MARK: Countdown
 
                 Text(
                     timerInterval:
@@ -490,6 +494,9 @@ struct DawnlyLiveActivity: Widget {
                     )
                 )
                 .monospacedDigit()
+                .foregroundStyle(
+                    Color.dawnlyOrange
+                )
                 .frame(
                     maxWidth: .infinity,
                     alignment: .leading
@@ -509,11 +516,23 @@ struct DawnlyLiveActivity: Widget {
 
                 Spacer(minLength: 16)
 
+                // MARK: Progress
+
                 Capsule()
                     .fill(
-                        Color.accentColor
-                            .opacity(0.15)
+                        Color.dawnlyOrange
+                            .opacity(0.18)
                     )
+                    .overlay {
+
+                        Capsule()
+                            .fill(
+                                Color.dawnlyOrange
+                            )
+                            .frame(
+                                maxWidth: .infinity
+                            )
+                    }
                     .frame(height: 4)
             }
             .padding(.horizontal, 20)
@@ -522,7 +541,7 @@ struct DawnlyLiveActivity: Widget {
                 Color(.systemBackground)
             )
             .activitySystemActionForegroundColor(
-                Color.accentColor
+                Color.dawnlyOrange
             )
 
         } dynamicIsland: { context in
@@ -542,7 +561,7 @@ struct DawnlyLiveActivity: Widget {
                                 "sun.max.fill"
                         )
                         .foregroundStyle(
-                            Color.accentColor
+                            Color.dawnlyOrange
                         )
 
                         Text("Dawnly")
@@ -567,7 +586,7 @@ struct DawnlyLiveActivity: Widget {
                         )
                         .tracking(1)
                         .foregroundStyle(
-                            .secondary
+                            Color.dawnlyOrange
                         )
                 }
 
@@ -592,6 +611,11 @@ struct DawnlyLiveActivity: Widget {
                         )
                     )
                     .monospacedDigit()
+                    .foregroundStyle(
+                        Color.dawnlyOrange
+                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 }
 
                 // MARK: Expanded Bottom
@@ -614,7 +638,7 @@ struct DawnlyLiveActivity: Widget {
 
                         Circle()
                             .fill(
-                                Color.accentColor
+                                Color.dawnlyOrange
                             )
                             .frame(
                                 width: 6,
@@ -625,43 +649,41 @@ struct DawnlyLiveActivity: Widget {
 
             } compactLeading: {
 
-                Image(
-                    systemName:
-                        "sun.max.fill"
-                )
-                .font(
-                    .system(
-                        size: 12,
-                        weight: .semibold
+                Image(systemName: "timer")
+                    .font(
+                        .system(
+                            size: 12,
+                            weight: .semibold
+                        )
                     )
-                )
-                .foregroundStyle(
-                    Color.accentColor
-                )
+                    .foregroundStyle(
+                        Color.dawnlyOrange
+                    )
 
             } compactTrailing: {
 
                 Text(
-                    timerInterval:
-                        context.state.startDate
-                        ...
-                        context.state.endDate,
-                    countsDown: true
+                    context.state.endDate,
+                    style: .timer
                 )
                 .font(
                     .system(
-                        size: 13,
+                        size: 11,
                         weight: .semibold,
                         design: .rounded
                     )
                 )
                 .monospacedDigit()
+                .foregroundStyle(
+                    Color.dawnlyOrange
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
 
             } minimal: {
 
                 Image(
-                    systemName:
-                        "timer"
+                    systemName: "timer"
                 )
                 .font(
                     .system(
@@ -670,7 +692,7 @@ struct DawnlyLiveActivity: Widget {
                     )
                 )
                 .foregroundStyle(
-                    Color.accentColor
+                    Color.dawnlyOrange
                 )
             }
         }
