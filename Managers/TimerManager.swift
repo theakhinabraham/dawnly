@@ -36,10 +36,43 @@ final class TimerManager {
     // MARK: - Session Completion
 
     var onSessionCompleted: ((FocusSession) -> Void)?
+    
+    var notificationsEnabled = true
+    var notificationSoundEnabled = true
 
     // MARK: - Initialization
 
     init() {
+
+        let savedDuration =
+            UserDefaults.standard.integer(
+                forKey: "defaultFocusDuration"
+            )
+
+        let defaultMinutes =
+            savedDuration > 0
+            ? savedDuration
+            : 25
+
+        let defaultDuration =
+            TimeInterval(defaultMinutes * 60)
+
+        duration = defaultDuration
+        timeRemaining = defaultDuration
+        selectedDuration = defaultDuration
+
+        switch defaultMinutes {
+
+        case 25:
+            selectedPreset = .twentyFive
+
+        case 50:
+            selectedPreset = .fifty
+
+        default:
+            selectedPreset = .custom
+        }
+
         restoreRunningSession()
     }
 
@@ -86,6 +119,15 @@ final class TimerManager {
             startDate: now,
             endDate: newEndDate
         )
+        
+        if notificationsEnabled {
+
+            NotificationManager.shared
+                .scheduleSessionCompletion(
+                    at: newEndDate,
+                    playSound: notificationSoundEnabled
+                )
+        }
 
         // Start Live Activity.
         startLiveActivity(
@@ -313,28 +355,24 @@ final class TimerManager {
             return nil
         }
 
-        // Stop local timer.
         timer?.invalidate()
         timer = nil
 
-        // Update state.
         isRunning = false
-        timeRemaining = 0
 
-        // End Live Activity.
+        // Reset the displayed timer to the selected duration
+        // after the session completes.
+        timeRemaining = selectedDuration
+
         endCurrentLiveActivity()
 
-        // Clear persisted running session.
         DawnlySharedState.clearRunningSession()
 
-        // Refresh widgets.
         WidgetCenter.shared.reloadAllTimelines()
 
-        // Clear in-memory dates.
         self.startDate = nil
         self.endDate = nil
 
-        // Create completed SwiftData session.
         return FocusSession(
             startDate: startDate,
             endDate: endDate,

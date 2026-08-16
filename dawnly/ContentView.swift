@@ -23,6 +23,10 @@ struct ContentView: View {
                         systemImage: "chart.bar.fill"
                     )
                 }
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
         }
     }
 }
