@@ -6,6 +6,7 @@ import SwiftData
 // MARK: - Dawnly Theme
 
 private extension Color {
+
     static let dawnlyOrange = Color(
         red: 1.0,
         green: 0.55,
@@ -19,12 +20,12 @@ struct DawnlyWidgetEntry: TimelineEntry {
 
     let date: Date
 
-    // Today's completed focus time
     let focusTime: TimeInterval
 
-    // Active timer information
     let isSessionRunning: Bool
+
     let sessionStartDate: Date?
+
     let sessionEndDate: Date?
 }
 
@@ -38,12 +39,16 @@ struct DawnlyWidgetProvider: TimelineProvider {
         in context: Context
     ) -> DawnlyWidgetEntry {
 
-        DawnlyWidgetEntry(
-            date: Date(),
+        let startDate = Date()
+
+        return DawnlyWidgetEntry(
+            date: startDate,
             focusTime: 25 * 60,
             isSessionRunning: true,
-            sessionStartDate: Date(),
-            sessionEndDate: Date().addingTimeInterval(25 * 60)
+            sessionStartDate: startDate,
+            sessionEndDate: startDate.addingTimeInterval(
+                25 * 60
+            )
         )
     }
 
@@ -57,10 +62,24 @@ struct DawnlyWidgetProvider: TimelineProvider {
         let runningSession =
             DawnlySharedState.runningSession()
 
+        let now = Date()
+
+        let isRunning: Bool
+
+        if let runningSession {
+
+            isRunning =
+                runningSession.endDate > now
+
+        } else {
+
+            isRunning = false
+        }
+
         let entry = DawnlyWidgetEntry(
-            date: Date(),
+            date: now,
             focusTime: todaysFocusTime(),
-            isSessionRunning: runningSession != nil,
+            isSessionRunning: isRunning,
             sessionStartDate: runningSession?.startDate,
             sessionEndDate: runningSession?.endDate
         )
@@ -72,7 +91,9 @@ struct DawnlyWidgetProvider: TimelineProvider {
 
     func getTimeline(
         in context: Context,
-        completion: @escaping (Timeline<DawnlyWidgetEntry>) -> Void
+        completion: @escaping (
+            Timeline<DawnlyWidgetEntry>
+        ) -> Void
     ) {
 
         let now = Date()
@@ -100,11 +121,13 @@ struct DawnlyWidgetProvider: TimelineProvider {
             sessionEndDate: runningSession?.endDate
         )
 
-        // Refresh when the active session finishes.
+        // Refresh when the session finishes.
+
         let nextRefresh: Date
 
-        if let endDate = runningSession?.endDate,
-           endDate > now {
+        if let endDate =
+            runningSession?.endDate,
+            endDate > now {
 
             nextRefresh = endDate
 
@@ -116,20 +139,24 @@ struct DawnlyWidgetProvider: TimelineProvider {
                     value: 15,
                     to: now
                 )
-                ?? now.addingTimeInterval(15 * 60)
+                ?? now.addingTimeInterval(
+                    15 * 60
+                )
         }
 
-        let timeline = Timeline(
-            entries: [entry],
-            policy: .after(nextRefresh)
-        )
+        let timeline =
+            Timeline(
+                entries: [entry],
+                policy: .after(nextRefresh)
+            )
 
         completion(timeline)
     }
 
     // MARK: SwiftData
 
-    private func todaysFocusTime() -> TimeInterval {
+    private func todaysFocusTime()
+        -> TimeInterval {
 
         let container =
             SharedModelContainer.container
@@ -147,7 +174,8 @@ struct DawnlyWidgetProvider: TimelineProvider {
 
         let descriptor =
             FetchDescriptor<FocusSession>(
-                predicate: #Predicate { session in
+                predicate: #Predicate {
+                    session in
 
                     session.completed &&
                     session.startDate >= startOfDay
@@ -266,6 +294,8 @@ struct DawnlyWidgetEntryView: View {
                     .foregroundStyle(
                         Color.dawnlyOrange
                     )
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 }
 
             } else {
@@ -373,6 +403,7 @@ struct DawnlyWidgetEntryView: View {
         if hours > 0 {
 
             if minutes == 0 {
+
                 return "\(hours)h"
             }
 
@@ -415,80 +446,96 @@ struct DawnlyWidget: Widget {
 
 // MARK: - Live Activity
 
-// MARK: - Live Activity
-
 struct DawnlyLiveActivity: Widget {
-
+    
     var body: some WidgetConfiguration {
-
+        
         ActivityConfiguration(
             for: DawnlyActivityAttributes.self
         ) { context in
-
-            // MARK: Lock Screen
-
+            
+            // MARK: - Lock Screen Live Activity
+            
             VStack(
                 alignment: .leading,
                 spacing: 0
             ) {
-
+                
                 // MARK: Header
-
-                HStack {
-
+                
+                HStack(
+                    alignment: .center,
+                    spacing: 0
+                ) {
+                    
                     HStack(spacing: 8) {
-
+                        
                         Image(
                             systemName: "sun.max.fill"
                         )
                         .font(
                             .system(
-                                size: 13,
+                                size: 14,
                                 weight: .semibold
                             )
                         )
                         .foregroundStyle(
                             Color.dawnlyOrange
                         )
-
+                        
                         Text("Dawnly")
                             .font(
                                 .system(
-                                    size: 15,
-                                    weight: .semibold
+                                    size: 16,
+                                    weight: .semibold,
+                                    design: .rounded
                                 )
                             )
+                            .lineLimit(1)
                     }
-
+                    
                     Spacer()
-
-                    Text("FOCUSING")
-                        .font(
-                            .system(
-                                size: 9,
-                                weight: .bold
+                    
+                    HStack(spacing: 6) {
+                        
+                        Circle()
+                            .fill(
+                                Color.dawnlyOrange
                             )
-                        )
-                        .tracking(1.2)
-                        .foregroundStyle(
-                            Color.dawnlyOrange
-                        )
+                            .frame(
+                                width: 6,
+                                height: 6
+                            )
+                        
+                        Text("FOCUSING")
+                            .font(
+                                .system(
+                                    size: 9,
+                                    weight: .bold
+                                )
+                            )
+                            .tracking(1.1)
+                            .foregroundStyle(
+                                Color.dawnlyOrange
+                            )
+                    }
                 }
-
-                Spacer(minLength: 16)
-
+                
+                Spacer()
+                    .frame(height: 18)
+                
                 // MARK: Countdown
-
+                
                 Text(
                     timerInterval:
                         context.state.startDate
-                        ...
-                        context.state.endDate,
+                    ...
+                    context.state.endDate,
                     countsDown: true
                 )
                 .font(
                     .system(
-                        size: 44,
+                        size: 46,
                         weight: .bold,
                         design: .rounded
                     )
@@ -499,143 +546,148 @@ struct DawnlyLiveActivity: Widget {
                 )
                 .frame(
                     maxWidth: .infinity,
-                    alignment: .leading
+                    alignment: .center
                 )
-
-                Spacer(minLength: 6)
-
-                Text("Stay focused.")
-                    .font(
-                        .system(
-                            size: 13
+                
+                Spacer()
+                    .frame(height: 7)
+                
+                // MARK: Status
+                
+                HStack(
+                    alignment: .center,
+                    spacing: 6
+                ) {
+                    
+                    Circle()
+                        .fill(
+                            Color.dawnlyOrange
                         )
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
-
-                Spacer(minLength: 16)
-
+                        .frame(
+                            width: 6,
+                            height: 6
+                        )
+                    
+                    Text("Stay focused.")
+                        .font(
+                            .system(
+                                size: 13,
+                                weight: .medium
+                            )
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
+                }
+                .frame(
+                    maxWidth: .infinity,
+                    alignment: .center
+                )
+                
+                Spacer()
+                    .frame(height: 16)
+                
                 // MARK: Progress
-
-                Capsule()
-                    .fill(
-                        Color.dawnlyOrange
-                            .opacity(0.18)
-                    )
-                    .overlay {
-
-                        Capsule()
-                            .fill(
-                                Color.dawnlyOrange
-                            )
-                            .frame(
-                                maxWidth: .infinity
-                            )
-                    }
-                    .frame(height: 4)
+                
+                ProgressView(
+                    timerInterval:
+                        context.state.startDate
+                    ...
+                    context.state.endDate,
+                    countsDown: false
+                )
+                .progressViewStyle(
+                    DawnlyLiveActivityProgressStyle()
+                )
+                .frame(height: 5)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 18)
+            .padding(
+                .horizontal,
+                22
+            )
+            .padding(
+                .vertical,
+                18
+            )
             .activityBackgroundTint(
                 Color(.systemBackground)
             )
             .activitySystemActionForegroundColor(
                 Color.dawnlyOrange
             )
-
+            
         } dynamicIsland: { context in
-
+            
             DynamicIsland {
-
+                
+                // =========================================================
                 // MARK: Expanded Leading
-
+                // =========================================================
+                
                 DynamicIslandExpandedRegion(
                     .leading
                 ) {
-
-                    HStack(spacing: 6) {
-
+                    
+                    HStack(
+                        alignment: .center,
+                        spacing: 7
+                    ) {
+                        
                         Image(
                             systemName:
                                 "sun.max.fill"
                         )
+                        .font(
+                            .system(
+                                size: 14,
+                                weight: .semibold
+                            )
+                        )
                         .foregroundStyle(
                             Color.dawnlyOrange
                         )
-
+                        
                         Text("Dawnly")
                             .font(
-                                .caption.bold()
+                                .system(
+                                    size: 14,
+                                    weight: .semibold,
+                                    design: .rounded
+                                )
                             )
+                            .lineLimit(1)
                     }
+                    .padding(
+                        .leading,
+                        12
+                    )
                 }
-
+                
+                // =========================================================
                 // MARK: Expanded Trailing
-
+                // =========================================================
+                
                 DynamicIslandExpandedRegion(
                     .trailing
                 ) {
-
-                    Text("FOCUS")
-                        .font(
-                            .system(
-                                size: 9,
-                                weight: .bold
-                            )
-                        )
-                        .tracking(1)
-                        .foregroundStyle(
-                            Color.dawnlyOrange
-                        )
-                }
-
-                // MARK: Expanded Center
-
-                DynamicIslandExpandedRegion(
-                    .center
-                ) {
-
-                    Text(
-                        timerInterval:
-                            context.state.startDate
-                            ...
-                            context.state.endDate,
-                        countsDown: true
-                    )
-                    .font(
-                        .system(
-                            size: 30,
-                            weight: .bold,
-                            design: .rounded
-                        )
-                    )
-                    .monospacedDigit()
-                    .foregroundStyle(
-                        Color.dawnlyOrange
-                    )
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                }
-
-                // MARK: Expanded Bottom
-
-                DynamicIslandExpandedRegion(
-                    .bottom
-                ) {
-
-                    HStack {
-
-                        Text("Stay focused.")
+                    
+                    HStack(
+                        alignment: .center,
+                        spacing: 5
+                    ) {
+                        
+                        Text("FOCUS")
                             .font(
-                                .caption
+                                .system(
+                                    size: 9,
+                                    weight: .bold
+                                )
                             )
+                            .tracking(1.0)
                             .foregroundStyle(
-                                .secondary
+                                Color.dawnlyOrange
                             )
-
-                        Spacer()
-
+                        
                         Circle()
                             .fill(
                                 Color.dawnlyOrange
@@ -645,56 +697,284 @@ struct DawnlyLiveActivity: Widget {
                                 height: 6
                             )
                     }
+                    .padding(
+                        .trailing,
+                        12
+                    )
                 }
-
-            } compactLeading: {
-
-                Image(systemName: "timer")
-                    .font(
-                        .system(
-                            size: 12,
-                            weight: .semibold
+                
+                // =========================================================
+                // MARK: Expanded Bottom
+                // =========================================================
+                
+                DynamicIslandExpandedRegion(
+                    .bottom
+                ) {
+                    
+                    VStack(
+                        alignment: .center,
+                        spacing: 10
+                    ) {
+                        
+                        // Countdown
+                        
+                        Text(
+                            timerInterval:
+                                context.state.startDate
+                            ...
+                            context.state.endDate,
+                            countsDown: true
                         )
+                        .font(
+                            .system(
+                                size: 32,
+                                weight: .bold,
+                                design: .rounded
+                            )
+                        )
+                        .monospacedDigit()
+                        .foregroundStyle(
+                            Color.dawnlyOrange
+                        )
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .center
+                        )
+                        
+                        // Progress bar
+                        
+                        ProgressView(
+                            timerInterval:
+                                context.state.startDate
+                            ...
+                            context.state.endDate,
+                            countsDown: false
+                        )
+                        .progressViewStyle(
+                            DawnlyLiveActivityProgressStyle()
+                        )
+                        .frame(height: 5)
+                        .padding(
+                            .horizontal,
+                            28
+                        )
+                        
+                        // Bottom status
+                        
+                        HStack(
+                            alignment: .center,
+                            spacing: 0
+                        ) {
+                            
+                            HStack(spacing: 6) {
+                                
+                                Circle()
+                                    .fill(
+                                        Color.dawnlyOrange
+                                    )
+                                    .frame(
+                                        width: 6,
+                                        height: 6
+                                    )
+                                
+                                Text("Stay focused")
+                                    .font(
+                                        .system(
+                                            size: 11,
+                                            weight: .medium
+                                        )
+                                    )
+                                    .foregroundStyle(
+                                        .secondary
+                                    )
+                            }
+                            
+                            Spacer()
+                            
+                            Text("FOCUS SESSION")
+                                .font(
+                                    .system(
+                                        size: 9,
+                                        weight: .bold
+                                    )
+                                )
+                                .tracking(0.9)
+                                .foregroundStyle(
+                                    Color.dawnlyOrange
+                                )
+                        }
+                        .padding(
+                            .horizontal,
+                            28
+                        )
+                    }
+                    .frame(
+                        maxWidth: .infinity
                     )
-                    .foregroundStyle(
-                        Color.dawnlyOrange
+                    .padding(
+                        .top,
+                        4
                     )
-
-            } compactTrailing: {
-
-                Text(
-                    context.state.endDate,
-                    style: .timer
-                )
-                .font(
-                    .system(
-                        size: 11,
-                        weight: .semibold,
-                        design: .rounded
+                    .padding(
+                        .bottom,
+                        6
                     )
-                )
-                .monospacedDigit()
-                .foregroundStyle(
-                    Color.dawnlyOrange
-                )
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
+                }
+                
+                            } compactLeading: {
 
-            } minimal: {
+                                // =========================================================
+                                // MARK: Compact Leading
+                                // =========================================================
 
-                Image(
-                    systemName: "timer"
-                )
-                .font(
-                    .system(
-                        size: 12,
-                        weight: .semibold
-                    )
-                )
-                .foregroundStyle(
-                    Color.dawnlyOrange
-                )
-            }
+                                HStack(spacing: 0) {
+
+                                    Spacer(
+                                        minLength: 0
+                                    )
+
+                                    Image(
+                                        systemName: "timer"
+                                    )
+                                    .font(
+                                        .system(
+                                            size: 13,
+                                            weight: .semibold
+                                        )
+                                    )
+                                    .foregroundStyle(
+                                        Color.dawnlyOrange
+                                    )
+                                }
+                                .frame(
+                                    width: 28,
+                                    height: 20,
+                                    alignment: .trailing
+                                )
+
+                            } compactTrailing: {
+
+                                // =========================================================
+                                // MARK: Compact Trailing
+                                // =========================================================
+
+                                Text(
+                                    context.state.endDate,
+                                    style: .timer
+                                )
+                                .font(
+                                    .system(
+                                        size: 12,
+                                        weight: .semibold,
+                                        design: .rounded
+                                    )
+                                )
+                                .monospacedDigit()
+                                .foregroundStyle(
+                                    Color.dawnlyOrange
+                                )
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(
+                                    width: 42,
+                                    height: 20,
+                                    alignment: .leading
+                                )
+
+                            } minimal: {
+
+                                // =========================================================
+                                // MARK: Minimal
+                                // =========================================================
+
+                                Image(
+                                    systemName: "timer"
+                                )
+                                .font(
+                                    .system(
+                                        size: 12,
+                                        weight: .semibold
+                                    )
+                                )
+                                .foregroundStyle(
+                                    Color.dawnlyOrange
+                                )
+                                .frame(
+                                    width: 20,
+                                    height: 20,
+                                    alignment: .center
+                                )
+                            }
+
         }
     }
 }
+
+// MARK: - Live Activity Progress Style
+
+private struct DawnlyLiveActivityProgressStyle:
+    ProgressViewStyle {
+
+    func makeBody(
+        configuration: Configuration
+    ) -> some View {
+
+        GeometryReader { geometry in
+
+            ZStack(alignment: .leading) {
+
+                // Background
+
+                Capsule()
+                    .fill(
+                        Color.dawnlyOrange
+                            .opacity(0.16)
+                    )
+
+                // Active progress
+
+                Capsule()
+                    .fill(
+                        Color.dawnlyOrange
+                    )
+                    .frame(
+                        width: progressWidth(
+                            geometryWidth:
+                                geometry.size.width,
+                            fraction:
+                                configuration.fractionCompleted
+                        )
+                    )
+            }
+        }
+        .frame(height: 5)
+        .clipShape(
+            Capsule()
+        )
+    }
+
+    private func progressWidth(
+        geometryWidth: CGFloat,
+        fraction: Double?
+    ) -> CGFloat {
+
+        guard let fraction else {
+            return 0
+        }
+
+        let clampedFraction =
+            max(
+                0,
+                min(
+                    fraction,
+                    1
+                )
+            )
+
+        return geometryWidth
+            * CGFloat(clampedFraction)
+    }
+}
+
