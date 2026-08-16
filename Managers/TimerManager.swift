@@ -55,16 +55,13 @@ final class TimerManager {
             : 25
 
         let defaultDuration =
-            TimeInterval(
-                defaultMinutes * 60
-            )
+            TimeInterval(defaultMinutes * 60)
 
         duration = defaultDuration
         timeRemaining = defaultDuration
         selectedDuration = defaultDuration
 
         switch defaultMinutes {
-
         case 25:
             selectedPreset = .twentyFive
 
@@ -82,10 +79,7 @@ final class TimerManager {
 
     @discardableResult
     func start() -> Date {
-
-        start(
-            duration: selectedDuration
-        )
+        start(duration: selectedDuration)
     }
 
     @discardableResult
@@ -93,28 +87,31 @@ final class TimerManager {
         duration: TimeInterval
     ) -> Date {
 
-        // Stop any existing local timer.
+        // Stop existing local timer.
         timer?.invalidate()
         timer = nil
 
-        // End any previous Live Activity.
+        // Cancel any previously scheduled notification.
+        NotificationManager.shared
+            .cancelSessionCompletion()
+
+        // End previous Live Activity.
         endCurrentLiveActivity()
 
-        // Clear old state.
+        // Reset old state.
         startDate = nil
         endDate = nil
         isRunning = false
 
-        // Store duration.
+        // IMPORTANT:
+        // Store the actual selected duration.
         self.duration = duration
         self.selectedDuration = duration
 
         let now = Date()
 
         let newEndDate =
-            now.addingTimeInterval(
-                duration
-            )
+            now.addingTimeInterval(duration)
 
         startDate = now
         endDate = newEndDate
@@ -128,14 +125,13 @@ final class TimerManager {
             endDate: newEndDate
         )
 
-        // Schedule notification.
+        // Schedule completion notification.
         if notificationsEnabled {
 
             NotificationManager.shared
                 .scheduleSessionCompletion(
                     at: newEndDate,
-                    playSound:
-                        notificationSoundEnabled
+                    playSound: notificationSoundEnabled
                 )
         }
 
@@ -159,14 +155,14 @@ final class TimerManager {
     private func restoreRunningSession() {
 
         guard let runningSession =
-            DawnlySharedState.runningSession()
+                DawnlySharedState.runningSession()
         else {
             return
         }
 
         let now = Date()
 
-        // Session already expired.
+        // Session has expired.
         guard runningSession.endDate > now else {
 
             DawnlySharedState.clearRunningSession()
@@ -186,8 +182,7 @@ final class TimerManager {
                     runningSession.startDate
                 )
 
-        selectedDuration =
-            duration
+        selectedDuration = duration
 
         timeRemaining =
             runningSession.endDate
@@ -195,10 +190,8 @@ final class TimerManager {
 
         isRunning = true
 
-        // Restore local timer.
         startLocalTimer()
 
-        // Restore Live Activity.
         restoreLiveActivity(
             startDate:
                 runningSession.startDate,
@@ -273,8 +266,7 @@ final class TimerManager {
                         nil
                 )
 
-            liveActivity =
-                activity
+            liveActivity = activity
 
             print(
                 "Dawnly: Live Activity started: \(activity.id)"
@@ -295,18 +287,15 @@ final class TimerManager {
         endDate: Date
     ) {
 
-        guard liveActivity == nil
-        else {
+        guard liveActivity == nil else {
             return
         }
 
-        // Check for an existing Dawnly Live Activity.
         for activity in Activity<
             DawnlyActivityAttributes
         >.activities {
 
-            liveActivity =
-                activity
+            liveActivity = activity
 
             print(
                 "Dawnly: Existing Live Activity restored: \(activity.id)"
@@ -315,54 +304,17 @@ final class TimerManager {
             return
         }
 
-        // No existing activity.
         startLiveActivity(
-            startDate:
-                startDate,
-            endDate:
-                endDate
+            startDate: startDate,
+            endDate: endDate
         )
-    }
-
-    // MARK: - Update Live Activity
-
-    private func updateLiveActivity() {
-
-        guard
-            let activity = liveActivity,
-            let startDate,
-            let endDate
-        else {
-            return
-        }
-
-        let state =
-            DawnlyActivityAttributes.ContentState(
-                startDate:
-                    startDate,
-                endDate:
-                    endDate
-            )
-
-        Task {
-
-            await activity.update(
-                ActivityContent(
-                    state:
-                        state,
-                    staleDate:
-                        endDate
-                )
-            )
-        }
     }
 
     // MARK: - End Live Activity
 
     private func endCurrentLiveActivity() {
 
-        guard let activity =
-                liveActivity
+        guard let activity = liveActivity
         else {
             return
         }
@@ -373,8 +325,7 @@ final class TimerManager {
 
             await activity.end(
                 nil,
-                dismissalPolicy:
-                    .immediate
+                dismissalPolicy: .immediate
             )
 
             print(
@@ -399,27 +350,20 @@ final class TimerManager {
 
         if remaining <= 0 {
 
-            if let session =
-                finish() {
+            if let session = finish() {
 
-                onSessionCompleted?(
-                    session
-                )
+                onSessionCompleted?(session)
             }
 
         } else {
 
-            timeRemaining =
-                remaining
-
-            // Keep Live Activity state synchronized
-            // while the app is active.
-            updateLiveActivity()
+            timeRemaining = remaining
         }
     }
 
     // MARK: - Finish
 
+    @discardableResult
     func finish() -> FocusSession? {
 
         guard
@@ -434,14 +378,31 @@ final class TimerManager {
 
         isRunning = false
 
-        // Reset timer display.
-        timeRemaining =
-            selectedDuration
+        // IMPORTANT:
+        // Capture the actual session duration BEFORE
+        // resetting anything.
+        let completedDuration =
+            endDate.timeIntervalSince(startDate)
+
+        let completedSession =
+            FocusSession(
+                startDate: startDate,
+                endDate: endDate,
+                duration: completedDuration,
+                completed: true
+            )
+
+        // Reset display.
+        timeRemaining = selectedDuration
 
         // End Live Activity.
         endCurrentLiveActivity()
 
-        // Clear persisted session.
+        // Cancel any pending notification.
+        NotificationManager.shared
+            .cancelSessionCompletion()
+
+        // Clear persisted running session.
         DawnlySharedState.clearRunningSession()
 
         // Refresh widgets.
@@ -451,16 +412,7 @@ final class TimerManager {
         self.startDate = nil
         self.endDate = nil
 
-        return FocusSession(
-            startDate:
-                startDate,
-            endDate:
-                endDate,
-            duration:
-                duration,
-            completed:
-                true
-        )
+        return completedSession
     }
 
     // MARK: - Cancel
@@ -474,6 +426,9 @@ final class TimerManager {
 
         endCurrentLiveActivity()
 
+        NotificationManager.shared
+            .cancelSessionCompletion()
+
         DawnlySharedState.clearRunningSession()
 
         WidgetCenter.shared.reloadAllTimelines()
@@ -481,26 +436,20 @@ final class TimerManager {
         startDate = nil
         endDate = nil
 
-        timeRemaining =
-            selectedDuration
+        timeRemaining = selectedDuration
     }
 
     // MARK: - Progress
 
     var progress: Double {
 
-        guard duration > 0
-        else {
+        guard duration > 0 else {
             return 0
         }
 
         return min(
             max(
-                1 -
-                (
-                    timeRemaining /
-                    duration
-                ),
+                1 - (timeRemaining / duration),
                 0
             ),
             1
@@ -524,8 +473,7 @@ final class TimerManager {
             totalSeconds % 60
 
         return String(
-            format:
-                "%02d:%02d",
+            format: "%02d:%02d",
             minutes,
             seconds
         )

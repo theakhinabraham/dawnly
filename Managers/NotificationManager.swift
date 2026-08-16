@@ -13,14 +13,20 @@ final class NotificationManager {
 
         do {
 
-            try await UNUserNotificationCenter.current()
-                .requestAuthorization(
-                    options: [
-                        .alert,
-                        .sound,
-                        .badge
-                    ]
-                )
+            let granted =
+                try await UNUserNotificationCenter
+                    .current()
+                    .requestAuthorization(
+                        options: [
+                            .alert,
+                            .sound,
+                            .badge
+                        ]
+                    )
+
+            print(
+                "Dawnly: Notification permission: \(granted)"
+            )
 
         } catch {
 
@@ -37,6 +43,16 @@ final class NotificationManager {
         playSound: Bool = true
     ) {
 
+        let center =
+            UNUserNotificationCenter.current()
+
+        // Remove any previous Dawnly completion notification.
+        center.removePendingNotificationRequests(
+            withIdentifiers: [
+                "dawnly.focus.complete"
+            ]
+        )
+
         let content =
             UNMutableNotificationContent()
 
@@ -45,8 +61,6 @@ final class NotificationManager {
 
         content.body =
             "Great work. Time for a break."
-
-        // Respect the user's notification sound setting.
 
         if playSound {
 
@@ -87,29 +101,29 @@ final class NotificationManager {
                     trigger
             )
 
-        UNUserNotificationCenter.current()
-            .add(request) { error in
+        center.add(request) { error in
 
-                if let error {
+            if let error {
 
-                    print(
-                        "Dawnly: Notification scheduling error: \(error)"
-                    )
+                print(
+                    "Dawnly: Notification scheduling error: \(error)"
+                )
 
-                } else {
+            } else {
 
-                    print(
-                        "Dawnly: Focus completion notification scheduled."
-                    )
-                }
+                print(
+                    "Dawnly: Focus completion notification scheduled for \(date)"
+                )
             }
+        }
     }
 
     // MARK: - Cancel
 
     func cancelSessionCompletion() {
 
-        UNUserNotificationCenter.current()
+        UNUserNotificationCenter
+            .current()
             .removePendingNotificationRequests(
                 withIdentifiers: [
                     "dawnly.focus.complete"

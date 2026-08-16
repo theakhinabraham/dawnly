@@ -444,45 +444,46 @@ struct DawnlyWidget: Widget {
     }
 }
 
-// MARK: - Live Activity
+import ActivityKit
+import WidgetKit
+import SwiftUI
 
 struct DawnlyLiveActivity: Widget {
-    
+
     var body: some WidgetConfiguration {
-        
-        ActivityConfiguration(
+
+        ActivityConfiguration<
+            DawnlyActivityAttributes
+        >(
             for: DawnlyActivityAttributes.self
         ) { context in
-            
-            // MARK: - Lock Screen Live Activity
-            
+
+            // =========================================================
+            // MARK: Lock Screen / Banner
+            // =========================================================
+
             VStack(
                 alignment: .leading,
-                spacing: 0
+                spacing: 16
             ) {
-                
+
                 // MARK: Header
-                
-                HStack(
-                    alignment: .center,
-                    spacing: 0
-                ) {
-                    
-                    HStack(spacing: 8) {
-                        
+
+                HStack {
+
+                    HStack(spacing: 9) {
+
                         Image(
                             systemName: "sun.max.fill"
                         )
                         .font(
                             .system(
-                                size: 14,
+                                size: 15,
                                 weight: .semibold
                             )
                         )
-                        .foregroundStyle(
-                            Color.dawnlyOrange
-                        )
-                        
+                        .foregroundStyle(Color.orange)
+
                         Text("Dawnly")
                             .font(
                                 .system(
@@ -491,162 +492,107 @@ struct DawnlyLiveActivity: Widget {
                                     design: .rounded
                                 )
                             )
-                            .lineLimit(1)
                     }
-                    
+
                     Spacer()
-                    
-                    HStack(spacing: 6) {
-                        
-                        Circle()
-                            .fill(
-                                Color.dawnlyOrange
-                            )
-                            .frame(
-                                width: 6,
-                                height: 6
-                            )
-                        
-                        Text("FOCUSING")
+
+                    Text(
+                        timerText(context.state)
+                    )
+                    .font(
+                        .system(
+                            size: 17,
+                            weight: .semibold,
+                            design: .rounded
+                        )
+                    )
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .fixedSize(
+                        horizontal: true,
+                        vertical: false
+                    )
+                }
+
+                // MARK: Progress
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 8
+                ) {
+
+                    ProgressView(
+                        timerInterval:
+                            context.state.startDate
+                            ...
+                            context.state.endDate,
+                        countsDown: false
+                    )
+                    .progressViewStyle(.linear)
+                    .tint(Color.orange)
+
+                    HStack {
+
+                        Text("Focus session")
                             .font(
                                 .system(
-                                    size: 9,
-                                    weight: .bold
+                                    size: 11,
+                                    weight: .medium
                                 )
                             )
-                            .tracking(1.1)
-                            .foregroundStyle(
-                                Color.dawnlyOrange
-                            )
-                    }
-                }
-                
-                Spacer()
-                    .frame(height: 18)
-                
-                // MARK: Countdown
-                
-                Text(
-                    timerInterval:
-                        context.state.startDate
-                    ...
-                    context.state.endDate,
-                    countsDown: true
-                )
-                .font(
-                    .system(
-                        size: 46,
-                        weight: .bold,
-                        design: .rounded
-                    )
-                )
-                .monospacedDigit()
-                .foregroundStyle(
-                    Color.dawnlyOrange
-                )
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .center
-                )
-                
-                Spacer()
-                    .frame(height: 7)
-                
-                // MARK: Status
-                
-                HStack(
-                    alignment: .center,
-                    spacing: 6
-                ) {
-                    
-                    Circle()
-                        .fill(
-                            Color.dawnlyOrange
+                            .foregroundStyle(.secondary)
+
+                        Spacer()
+
+                        Text(
+                            "\(Int(context.attributes.sessionDuration / 60)) min"
                         )
-                        .frame(
-                            width: 6,
-                            height: 6
-                        )
-                    
-                    Text("Stay focused.")
                         .font(
                             .system(
-                                size: 13,
+                                size: 11,
                                 weight: .medium
                             )
                         )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .foregroundStyle(.secondary)
+                    }
                 }
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .center
-                )
-                
-                Spacer()
-                    .frame(height: 16)
-                
-                // MARK: Progress
-                
-                ProgressView(
-                    timerInterval:
-                        context.state.startDate
-                    ...
-                    context.state.endDate,
-                    countsDown: false
-                )
-                .progressViewStyle(
-                    DawnlyLiveActivityProgressStyle()
-                )
-                .frame(height: 5)
             }
-            .padding(
-                .horizontal,
-                22
-            )
-            .padding(
-                .vertical,
-                18
-            )
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
             .activityBackgroundTint(
                 Color(.systemBackground)
             )
             .activitySystemActionForegroundColor(
-                Color.dawnlyOrange
+                Color.orange
             )
-            
+
         } dynamicIsland: { context in
-            
+
+            // =========================================================
+            // MARK: Dynamic Island
+            // =========================================================
+
             DynamicIsland {
-                
-                // =========================================================
+
                 // MARK: Expanded Leading
-                // =========================================================
-                
+
                 DynamicIslandExpandedRegion(
                     .leading
                 ) {
-                    
-                    HStack(
-                        alignment: .center,
-                        spacing: 7
-                    ) {
-                        
+
+                    HStack(spacing: 7) {
+
                         Image(
-                            systemName:
-                                "sun.max.fill"
+                            systemName: "sun.max.fill"
                         )
                         .font(
                             .system(
-                                size: 14,
+                                size: 13,
                                 weight: .semibold
                             )
                         )
-                        .foregroundStyle(
-                            Color.dawnlyOrange
-                        )
-                        
+                        .foregroundStyle(Color.orange)
+
                         Text("Dawnly")
                             .font(
                                 .system(
@@ -656,259 +602,201 @@ struct DawnlyLiveActivity: Widget {
                                 )
                             )
                             .lineLimit(1)
+                            .fixedSize(
+                                horizontal: true,
+                                vertical: false
+                            )
+                            .allowsTightening(true)
                     }
-                    .padding(
-                        .leading,
-                        12
+                    .fixedSize(
+                        horizontal: true,
+                        vertical: false
                     )
                 }
-                
-                // =========================================================
+
                 // MARK: Expanded Trailing
-                // =========================================================
-                
+
                 DynamicIslandExpandedRegion(
                     .trailing
                 ) {
-                    
-                    HStack(
-                        alignment: .center,
-                        spacing: 5
-                    ) {
-                        
-                        Text("FOCUS")
-                            .font(
-                                .system(
-                                    size: 9,
-                                    weight: .bold
-                                )
-                            )
-                            .tracking(1.0)
-                            .foregroundStyle(
-                                Color.dawnlyOrange
-                            )
-                        
-                        Circle()
-                            .fill(
-                                Color.dawnlyOrange
-                            )
-                            .frame(
-                                width: 6,
-                                height: 6
-                            )
-                    }
-                    .padding(
-                        .trailing,
-                        12
+
+                    Text(
+                        timerText(context.state)
+                    )
+                    .font(
+                        .system(
+                            size: 15,
+                            weight: .semibold,
+                            design: .rounded
+                        )
+                    )
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .fixedSize(
+                        horizontal: true,
+                        vertical: false
+                    )
+                    .minimumScaleFactor(0.7)
+                    .allowsTightening(true)
+                    .frame(
+                        width: 58,
+                        alignment: .trailing
                     )
                 }
-                
-                // =========================================================
-                // MARK: Expanded Bottom
-                // =========================================================
-                
+
+                // MARK: Expanded Center
+
                 DynamicIslandExpandedRegion(
-                    .bottom
+                    .center
                 ) {
-                    
+
                     VStack(
-                        alignment: .center,
-                        spacing: 10
+                        spacing: 12
                     ) {
-                        
-                        // Countdown
-                        
-                        Text(
-                            timerInterval:
-                                context.state.startDate
-                            ...
-                            context.state.endDate,
-                            countsDown: true
-                        )
-                        .font(
-                            .system(
-                                size: 32,
-                                weight: .bold,
-                                design: .rounded
+
+                        Text("Focus session")
+                            .font(
+                                .system(
+                                    size: 12,
+                                    weight: .medium
+                                )
                             )
-                        )
-                        .monospacedDigit()
-                        .foregroundStyle(
-                            Color.dawnlyOrange
-                        )
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .frame(
-                            maxWidth: .infinity,
-                            alignment: .center
-                        )
-                        
-                        // Progress bar
-                        
+                            .foregroundStyle(.secondary)
+
                         ProgressView(
                             timerInterval:
                                 context.state.startDate
-                            ...
-                            context.state.endDate,
+                                ...
+                                context.state.endDate,
                             countsDown: false
                         )
-                        .progressViewStyle(
-                            DawnlyLiveActivityProgressStyle()
-                        )
-                        .frame(height: 5)
-                        .padding(
-                            .horizontal,
-                            28
-                        )
-                        
-                        // Bottom status
-                        
-                        HStack(
-                            alignment: .center,
-                            spacing: 0
-                        ) {
-                            
-                            HStack(spacing: 6) {
-                                
-                                Circle()
-                                    .fill(
-                                        Color.dawnlyOrange
-                                    )
-                                    .frame(
-                                        width: 6,
-                                        height: 6
-                                    )
-                                
-                                Text("Stay focused")
-                                    .font(
-                                        .system(
-                                            size: 11,
-                                            weight: .medium
-                                        )
-                                    )
-                                    .foregroundStyle(
-                                        .secondary
-                                    )
-                            }
-                            
-                            Spacer()
-                            
-                            Text("FOCUS SESSION")
-                                .font(
-                                    .system(
-                                        size: 9,
-                                        weight: .bold
-                                    )
-                                )
-                                .tracking(0.9)
-                                .foregroundStyle(
-                                    Color.dawnlyOrange
-                                )
-                        }
-                        .padding(
-                            .horizontal,
-                            28
-                        )
+                        .progressViewStyle(.linear)
+                        .tint(Color.orange)
                     }
-                    .frame(
-                        maxWidth: .infinity
-                    )
-                    .padding(
-                        .top,
-                        4
-                    )
-                    .padding(
-                        .bottom,
-                        6
-                    )
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
                 }
-                
-                            } compactLeading: {
 
-                                // =========================================================
-                                // MARK: Compact Leading
-                                // =========================================================
+                // MARK: Expanded Bottom
 
-                                HStack(spacing: 0) {
+                DynamicIslandExpandedRegion(
+                    .bottom
+                ) {
 
-                                    Spacer(
-                                        minLength: 0
-                                    )
+                    HStack {
 
-                                    Image(
-                                        systemName: "timer"
-                                    )
-                                    .font(
-                                        .system(
-                                            size: 13,
-                                            weight: .semibold
-                                        )
-                                    )
-                                    .foregroundStyle(
-                                        Color.dawnlyOrange
-                                    )
-                                }
+                        HStack(spacing: 6) {
+
+                            Circle()
+                                .fill(Color.orange)
                                 .frame(
-                                    width: 28,
-                                    height: 20,
-                                    alignment: .trailing
+                                    width: 5,
+                                    height: 5
                                 )
 
-                            } compactTrailing: {
-
-                                // =========================================================
-                                // MARK: Compact Trailing
-                                // =========================================================
-
-                                Text(
-                                    context.state.endDate,
-                                    style: .timer
-                                )
+                            Text("Focusing")
                                 .font(
                                     .system(
-                                        size: 12,
-                                        weight: .semibold,
-                                        design: .rounded
+                                        size: 11,
+                                        weight: .medium
                                     )
                                 )
-                                .monospacedDigit()
-                                .foregroundStyle(
-                                    Color.dawnlyOrange
-                                )
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                                .frame(
-                                    width: 42,
-                                    height: 20,
-                                    alignment: .leading
-                                )
+                                .foregroundStyle(.secondary)
+                        }
 
-                            } minimal: {
+                        Spacer()
 
-                                // =========================================================
-                                // MARK: Minimal
-                                // =========================================================
+                        Text(
+                            "\(Int(context.attributes.sessionDuration / 60)) min session"
+                        )
+                        .font(
+                            .system(
+                                size: 11,
+                                weight: .medium
+                            )
+                        )
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                }
 
-                                Image(
-                                    systemName: "timer"
-                                )
-                                .font(
-                                    .system(
-                                        size: 12,
-                                        weight: .semibold
-                                    )
-                                )
-                                .foregroundStyle(
-                                    Color.dawnlyOrange
-                                )
-                                .frame(
-                                    width: 20,
-                                    height: 20,
-                                    alignment: .center
-                                )
-                            }
+            } compactLeading: {
 
+                Image(
+                    systemName: "sun.max.fill"
+                )
+                .font(
+                    .system(
+                        size: 12,
+                        weight: .semibold
+                    )
+                )
+                .foregroundStyle(Color.orange)
+
+            } compactTrailing: {
+
+                Text(
+                    timerText(context.state)
+                )
+                .font(
+                    .system(
+                        size: 11,
+                        weight: .semibold,
+                        design: .rounded
+                    )
+                )
+                .monospacedDigit()
+                .lineLimit(1)
+                .fixedSize(
+                    horizontal: true,
+                    vertical: false
+                )
+
+            } minimal: {
+
+                Image(
+                    systemName: "sun.max.fill"
+                )
+                .font(
+                    .system(
+                        size: 12,
+                        weight: .semibold
+                    )
+                )
+                .foregroundStyle(Color.orange)
+            }
         }
+    }
+
+    // =============================================================
+    // MARK: Timer Text
+    // =============================================================
+
+    private func timerText(
+        _ state:
+            DawnlyActivityAttributes.ContentState
+    ) -> String {
+
+        let remaining =
+            max(
+                state.endDate.timeIntervalSinceNow,
+                0
+            )
+
+        let totalSeconds =
+            Int(remaining)
+
+        let minutes =
+            totalSeconds / 60
+
+        let seconds =
+            totalSeconds % 60
+
+        return String(
+            format: "%02d:%02d",
+            minutes,
+            seconds
+        )
     }
 }
 

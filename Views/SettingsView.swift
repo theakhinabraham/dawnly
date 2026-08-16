@@ -3,26 +3,12 @@ import SwiftData
 import WidgetKit
 import UserNotifications
 
-// MARK: - Dawnly Theme
-
-private extension Color {
-
-    static let dawnlyOrange = Color(
-        red: 1.0,
-        green: 0.55,
-        blue: 0.15
-    )
-}
-
 // MARK: - Settings View
 
 struct SettingsView: View {
 
     @Environment(\.modelContext)
     private var modelContext
-
-    @Environment(\.colorScheme)
-    private var colorScheme
 
     @AppStorage("defaultFocusDuration")
     private var defaultFocusDuration = 25
@@ -53,12 +39,14 @@ struct SettingsView: View {
                 Section {
 
                     NavigationLink {
+
                         FocusSettingsView(
                             defaultFocusDuration:
                                 $defaultFocusDuration,
                             keepScreenAwake:
                                 $keepScreenAwake
                         )
+
                     } label: {
 
                         SettingsRow(
@@ -76,12 +64,37 @@ struct SettingsView: View {
                     )
                 }
 
+                // MARK: Goals
+
+                Section {
+
+                    NavigationLink {
+
+                        GoalsSettingsView()
+
+                    } label: {
+
+                        SettingsRow(
+                            icon: "target",
+                            title: "Goals",
+                            subtitle: goalsSummary
+                        )
+                    }
+
+                } header: {
+
+                    SettingsSectionHeader(
+                        title: "Goals"
+                    )
+                }
+
                 // MARK: Notifications
 
                 Section {
 
-                    Toggle(isOn:
-                        $sessionCompletionNotifications
+                    Toggle(
+                        isOn:
+                            $sessionCompletionNotifications
                     ) {
 
                         SettingsRow(
@@ -91,20 +104,27 @@ struct SettingsView: View {
                                 "Notify when a focus session ends"
                         )
                     }
-                    .tint(Color.dawnlyOrange)
+                    .tint(
+                        Color.dawnlyOrange
+                    )
 
-                    Toggle(isOn:
-                        $notificationSound
+                    Toggle(
+                        isOn:
+                            $notificationSound
                     ) {
 
                         SettingsRow(
-                            icon: "speaker.wave.2.fill",
-                            title: "Notification sound",
+                            icon:
+                                "speaker.wave.2.fill",
+                            title:
+                                "Notification sound",
                             subtitle:
                                 "Play a sound when a session ends"
                         )
                     }
-                    .tint(Color.dawnlyOrange)
+                    .tint(
+                        Color.dawnlyOrange
+                    )
                     .disabled(
                         !sessionCompletionNotifications
                     )
@@ -130,8 +150,10 @@ struct SettingsView: View {
                     } label: {
 
                         SettingsRow(
-                            icon: "circle.lefthalf.filled",
-                            title: "Appearance",
+                            icon:
+                                "circle.lefthalf.filled",
+                            title:
+                                "Appearance",
                             subtitle:
                                 appearanceDisplayName
                         )
@@ -160,8 +182,10 @@ struct SettingsView: View {
                     } label: {
 
                         SettingsRow(
-                            icon: "externaldrive.fill",
-                            title: "Data",
+                            icon:
+                                "externaldrive.fill",
+                            title:
+                                "Data",
                             subtitle:
                                 dataSummary
                         )
@@ -185,8 +209,10 @@ struct SettingsView: View {
                     } label: {
 
                         SettingsRow(
-                            icon: "info.circle.fill",
-                            title: "About Dawnly",
+                            icon:
+                                "info.circle.fill",
+                            title:
+                                "About Dawnly",
                             subtitle:
                                 "Version \(appVersion)"
                         )
@@ -202,8 +228,10 @@ struct SettingsView: View {
                     ) {
 
                         SettingsRow(
-                            icon: "envelope.fill",
-                            title: "Send feedback",
+                            icon:
+                                "envelope.fill",
+                            title:
+                                "Send feedback",
                             subtitle:
                                 "Tell us what you think"
                         )
@@ -252,7 +280,6 @@ struct SettingsView: View {
                         .foregroundStyle(
                             .secondary
                         )
-
                     }
                     .frame(
                         maxWidth: .infinity
@@ -297,13 +324,67 @@ struct SettingsView: View {
                 )
             }
         }
+        .preferredColorScheme(
+            preferredColorScheme
+        )
         .task {
 
             await requestNotificationPermissionIfNeeded()
         }
     }
 
-    // MARK: Appearance Name
+    // MARK: - Goals Summary
+
+    private var goalsSummary: String {
+
+        let dailyGoal =
+            UserDefaults.standard.integer(
+                forKey: "dailyFocusGoal"
+            )
+
+        let weeklyGoal =
+            UserDefaults.standard.integer(
+                forKey: "weeklyFocusGoal"
+            )
+
+        if dailyGoal > 0 && weeklyGoal > 0 {
+
+            return
+                "\(dailyGoal)m daily • \(weeklyGoal)m weekly"
+        }
+
+        if dailyGoal > 0 {
+
+            return "\(dailyGoal) minute daily goal"
+        }
+
+        if weeklyGoal > 0 {
+
+            return "\(weeklyGoal) minute weekly goal"
+        }
+
+        return "Set your focus goals"
+    }
+
+    // MARK: - Appearance
+
+    private var preferredColorScheme:
+        ColorScheme? {
+
+        switch appearance {
+
+        case "light":
+            return .light
+
+        case "dark":
+            return .dark
+
+        default:
+            return nil
+        }
+    }
+
+    // MARK: - Appearance Name
 
     private var appearanceDisplayName: String {
 
@@ -320,7 +401,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: Data Summary
+    // MARK: - Data Summary
 
     private var dataSummary: String {
 
@@ -348,11 +429,14 @@ struct SettingsView: View {
                 Int(total / 60)
 
             if minutes == 0 {
+
                 return "No completed sessions"
             }
 
             if minutes < 60 {
-                return "\(minutes) minutes focused"
+
+                return
+                    "\(minutes) minutes focused"
             }
 
             let hours =
@@ -362,7 +446,9 @@ struct SettingsView: View {
                 minutes % 60
 
             if remaining == 0 {
-                return "\(hours) hours focused"
+
+                return
+                    "\(hours) hours focused"
             }
 
             return
@@ -374,7 +460,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: App Version
+    // MARK: - App Version
 
     private var appVersion: String {
 
@@ -395,7 +481,7 @@ struct SettingsView: View {
         return "\(version) (\(build))"
     }
 
-    // MARK: Notification Permission
+    // MARK: - Notification Permission
 
     private func requestNotificationPermissionIfNeeded()
         async {
@@ -410,7 +496,8 @@ struct SettingsView: View {
                 .current()
                 .notificationSettings()
 
-        guard settings.authorizationStatus
+        guard
+            settings.authorizationStatus
                 == .notDetermined
         else {
             return
@@ -515,17 +602,19 @@ private struct SettingsSectionHeader: View {
 
     var body: some View {
 
-        Text(title.uppercased())
-            .font(
-                .system(
-                    size: 11,
-                    weight: .bold
-                )
+        Text(
+            title.uppercased()
+        )
+        .font(
+            .system(
+                size: 11,
+                weight: .bold
             )
-            .tracking(0.8)
-            .foregroundStyle(
-                .secondary
-            )
+        )
+        .tracking(0.8)
+        .foregroundStyle(
+            .secondary
+        )
     }
 }
 
@@ -595,7 +684,9 @@ private struct FocusSettingsView: View {
 
             } header: {
 
-                Text("Default duration")
+                Text(
+                    "Default duration"
+                )
             }
 
             Section {
@@ -636,30 +727,42 @@ private struct AppearanceSettingsView: View {
             Section {
 
                 AppearanceOption(
-                    title: "System",
-                    icon: "iphone",
+                    title:
+                        "System",
+                    icon:
+                        "iphone",
                     isSelected:
                         appearance == "system"
                 ) {
-                    appearance = "system"
+
+                    appearance =
+                        "system"
                 }
 
                 AppearanceOption(
-                    title: "Light",
-                    icon: "sun.max.fill",
+                    title:
+                        "Light",
+                    icon:
+                        "sun.max.fill",
                     isSelected:
                         appearance == "light"
                 ) {
-                    appearance = "light"
+
+                    appearance =
+                        "light"
                 }
 
                 AppearanceOption(
-                    title: "Dark",
-                    icon: "moon.fill",
+                    title:
+                        "Dark",
+                    icon:
+                        "moon.fill",
                     isSelected:
                         appearance == "dark"
                 ) {
-                    appearance = "dark"
+
+                    appearance =
+                        "dark"
                 }
 
             } footer: {
@@ -669,7 +772,9 @@ private struct AppearanceSettingsView: View {
                 )
             }
         }
-        .navigationTitle("Appearance")
+        .navigationTitle(
+            "Appearance"
+        )
         .navigationBarTitleDisplayMode(
             .inline
         )
@@ -694,7 +799,8 @@ private struct AppearanceOption: View {
             HStack(spacing: 13) {
 
                 Image(
-                    systemName: icon
+                    systemName:
+                        icon
                 )
                 .foregroundStyle(
                     Color.dawnlyOrange
@@ -734,6 +840,7 @@ private struct DataSettingsView: View {
     @Binding var showingClearHistoryAlert: Bool
 
     @State private var sessionCount = 0
+
     @State private var totalFocusTime:
         TimeInterval = 0
 
@@ -745,7 +852,9 @@ private struct DataSettingsView: View {
 
                 HStack {
 
-                    Text("Completed sessions")
+                    Text(
+                        "Completed sessions"
+                    )
 
                     Spacer()
 
@@ -760,7 +869,9 @@ private struct DataSettingsView: View {
 
                 HStack {
 
-                    Text("Total focus time")
+                    Text(
+                        "Total focus time"
+                    )
 
                     Spacer()
 
@@ -774,12 +885,16 @@ private struct DataSettingsView: View {
 
             } header: {
 
-                Text("Statistics")
+                Text(
+                    "Statistics"
+                )
             }
 
             Section {
 
-                Button(role: .destructive) {
+                Button(
+                    role: .destructive
+                ) {
 
                     showingClearHistoryAlert =
                         true
@@ -793,7 +908,9 @@ private struct DataSettingsView: View {
                                 "trash.fill"
                         )
 
-                        Text("Clear history")
+                        Text(
+                            "Clear history"
+                        )
                     }
                 }
 
@@ -804,7 +921,9 @@ private struct DataSettingsView: View {
                 )
             }
         }
-        .navigationTitle("Data")
+        .navigationTitle(
+            "Data"
+        )
         .navigationBarTitleDisplayMode(
             .inline
         )
@@ -902,7 +1021,8 @@ private struct DataSettingsView: View {
 
             WidgetCenter.shared
                 .reloadTimelines(
-                    ofKind: "DawnlyWidget"
+                    ofKind:
+                        "DawnlyWidget"
                 )
 
         } catch {
@@ -931,10 +1051,12 @@ private struct DataSettingsView: View {
         if hours > 0 {
 
             if minutes == 0 {
+
                 return "\(hours)h"
             }
 
-            return "\(hours)h \(minutes)m"
+            return
+                "\(hours)h \(minutes)m"
         }
 
         return "\(minutes)m"
@@ -947,6 +1069,7 @@ private struct DataSettingsView: View {
 
     SettingsView()
         .modelContainer(
-            for: FocusSession.self
+            for:
+                FocusSession.self
         )
 }
